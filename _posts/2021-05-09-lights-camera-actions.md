@@ -44,9 +44,12 @@ The next bit took a little more googling to figure out the right way to handle t
         restore-keys: |
           ${{ runner.os }}-yarn-
     - name: Install project dependencies
-      run: yarn --prefer-offline 
+      run: yarn --frozen-lockfile --prefer-offline 
 ```
 The first step is simply checking where the yarn cache directory actually is on this VM and storing that to a variable to use in the next step. It then tells the Github Action runner to cache the contents of that directory with the given composite key (the runner's OS and a hash of the `yarn.lock` file). There's also a fallback `restore-keys` parameter saying if we can't find an exact match, to just use anything that was cached on the same OS since presumably it should have at least some of the target packages already. Finally, it does the actual `yarn install`. By default `yarn` will check the network for package updates when installing anyway, so we use the `--prefer-offline` flag to tell it to skip the network check if the exact package it's looking for can be found in the local cache.
+
+**Edit:** A reader suggested I add the `--frozen-lockfile` flag to the `yarn` command here. I had totally forgotten about that, but it's definitely [best practice](https://classic.yarnpkg.com/en/docs/cli/install/) for ensuring reproducible builds in a CI environment:
+> If you need reproducible dependencies, which is usually the case with the continuous integration systems, you should pass `--frozen-lockfile` flag.
 
 The rest of the job is fairly straightforward `yarn` commands to build, test (with coverage), upload the coverage files to [`codecov`](https://codecov.io/gh/chippydip/spacegame), and then save the build artifacts so they can be used in a follow-up job.
 ```yaml
