@@ -9,7 +9,7 @@ Our game needs to simulate a solar system and also render that simulation. These
 
 We can separate out the simulation and rendering logic fairly easily and just leave the data in our objects, but this still has the problem of needing to know all of the data that will be needed for a given object ahead of time so that we can include it in our classes. Currently, our data model looks something like this:
 
-```TypeScript
+```typescript
 interface SystemObject {
     name: string; // duplicated system.name
     radius: number; // duplicated system.radius
@@ -34,7 +34,7 @@ After deciding to switch to an ECS system for this game, I looked into some opti
 ## Components
 Let's start by looking at how we can decouple the rendering system from the underlying solar system model. Currently the rendering system builds the `SystemObject`s shown above for each body in the model during an init pass. Let's see if we can split this up into some more focused components:
 
-```TypeScript
+```typescript
 class Name {
     constructor(public name: string) { }
 }
@@ -73,7 +73,7 @@ The final code will have a few more components, but these are the ones that are 
 ## Systems
 Once we have the data broken out like this, we can start thinking about some of the systems we'll need to operate on this data. Firstly, we'll need a system to update the `LocalPosition` each frame based on the `Orbit` parameters and the current simulation time. Then we'll need another system to update the `frame` position in the `ThreeJsBody` component based on that `LocalPosition`. These system might look something like this:
 
-```TypeScript
+```typescript
 export interface System {
     readonly query: Query | Query[];
     run: (group: EntityGroup, world: World) => void;
@@ -108,7 +108,7 @@ I've omitted the implementations since they're mostly irrelevant to building out
 
 The interesting bit here is that we're using the component class names as objects in both the query and the `EntityGroup` methods (`with()` and `update()`). Technically those are class constructors that are being passed around, the supporting types look something like this:
 
-```TypeScript
+```typescript
 type Constructor = new (...args: any[]) => any;
 
 export class EntityGroup {
@@ -142,7 +142,7 @@ There's a bit of duplication here with the component names in the query and also
 
 Hopefully this has made sense so far, we can build systems that update components based on other components, but how do we handle initialization and tear down? The rendering system will need to add some components on mount and remove them on unmount, how might that work? With more systems of course!
 
-```TypeScript
+```typescript
 class CanvasLabelAdder implements System {
     readonly query = {
         all: [Name],
